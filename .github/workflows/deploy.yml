@@ -32,7 +32,7 @@ jobs:
 
           # Clone repo if folder doesn't exist
           if [ ! -d "CI-CD-Pipeline" ]; then
-            git clone https://github.com/ngollodev/CI-CD-Pipeline..git
+            git clone https://github.com/ngollodev/CI-CD-Pipeline.git
           fi
           cd CI-CD-Pipeline
           git pull
