@@ -1,0 +1,46 @@
+name: Deploy Node App to AWS EC2
+
+# Trigger deployment on push to main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout your repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Save SSH Key from GitHub Secrets
+      - name: Save SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > devops-key.pem
+          chmod 600 devops-key.pem
+
+      # Step 3: Connect to EC2 and deploy
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i devops-key.pem ubuntu@16.171.27.119 << 'EOF'
+
+          # Stop and remove old container if it exists
+          docker stop devops-node-server || true
+          docker rm devops-node-server || true
+
+          # Clone repo if folder doesn't exist
+          if [ ! -d "CI-CD-Pipeline" ]; then
+            git clone https://github.com/ngollodev/CI-CD-Pipeline..git
+          fi
+          cd CI-CD-Pipeline
+          git pull
+
+          # Build Docker image with your Dockerfile
+          docker build -t node-backend:v1 .
+
+          # Run Docker container with correct name and port mapping
+          docker run -d -p 3000:3000 --name devops-node-server node-backend:v1
+
+          EOF
